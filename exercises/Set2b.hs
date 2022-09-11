@@ -16,7 +16,11 @@ import Data.List
 -- Hint! pattern matching is your friend.
 
 binomial :: Integer -> Integer -> Integer
-binomial = todo
+binomial n 0 = 1
+binomial 0 _ = 0
+binomial n k
+    | n == k = 1 -- *** putting an extra pattern matching like binomial n n = 1 is wrong because we are using the same variable in the same scope for different values and we will receive an error ***
+    | otherwise = binomial (n-1) k + binomial (n-1) (k-1)
 
 ------------------------------------------------------------------------------
 -- Ex 2: implement the odd factorial function. Odd factorial is like
@@ -27,7 +31,10 @@ binomial = todo
 --   oddFactorial 6 ==> 5*3*1 ==> 15
 
 oddFactorial :: Integer -> Integer
-oddFactorial = todo
+oddFactorial 1 = 1
+oddFactorial n 
+    | even n = oddFactorial (n-1)
+    | otherwise = n * oddFactorial (n-1)
 
 ------------------------------------------------------------------------------
 -- Ex 3: implement the Euclidean Algorithm for finding the greatest
@@ -58,9 +65,19 @@ oddFactorial = todo
 -- Background reading:
 -- * https://en.wikipedia.org/wiki/Euclidean_algorithm
 
-myGcd :: Integer -> Integer -> Integer
-myGcd = todo
+-- ***tail recursion; also % is undefined in haskell***
 
+myGcd :: Integer -> Integer -> Integer
+myGcd a b 
+    | a == 0 = b 
+    | b == 0 = a
+    | a > b = myGcd (a `mod` b) b
+    | otherwise = myGcd (b `mod` a) a  -- *** we can write gaurds without otherwise (unlike if and else where else is obligatory) ***
+
+-- *** defining a function twice will overwrite it when using gaurds ideally put everything inside the gaurds unless the definition is spearate ***
+{-
+*** for example in the above writing myGcd a 0 = a will do no good outside of the gaurds.
+-}
 ------------------------------------------------------------------------------
 -- Ex 4: Implement the function leftpad which adds space characters
 -- to the start of the string until it is long enough.
@@ -75,7 +92,9 @@ myGcd = todo
 -- * you can compute the length of a string with the length function
 
 leftpad :: String -> Int -> String
-leftpad = todo
+leftpad s num
+    | length s == num = s
+    | otherwise = leftpad (" "++s) (num)
 
 ------------------------------------------------------------------------------
 -- Ex 5: let's make a countdown for a rocket! Given a number, you
@@ -88,10 +107,15 @@ leftpad = todo
 -- Hints:
 -- * you can combine strings with the ++ operator
 -- * you can use the show function to convert a number into a string
--- * you'll probably need a recursive helper function
+-- * you'll probably need a recursive helper function ***(because only part of the output is recursive)***
 
 countdown :: Integer -> String
-countdown = todo
+countdown x = "Ready! " ++ countdown' x ++ "Liftoff!"
+
+
+countdown' :: Integer -> String
+countdown' 0 = ""
+countdown' x = show x ++ "... " ++ countdown' (x-1)
 
 ------------------------------------------------------------------------------
 -- Ex 6: implement the function smallestDivisor that returns the
@@ -109,16 +133,25 @@ countdown = todo
 -- Hint: remember the mod function!
 
 smallestDivisor :: Integer -> Integer
-smallestDivisor = todo
+smallestDivisor 1 = 1
+smallestDivisor n = smallestDivisor' n 2
 
+smallestDivisor' :: Integer -> Integer -> Integer
+smallestDivisor' n k 
+    | n `mod` k == 0 = k
+    | otherwise = smallestDivisor' n (k+1)
 ------------------------------------------------------------------------------
 -- Ex 7: implement a function isPrime that checks if the given number
 -- is a prime number. Use the function smallestDivisor.
 --
 -- Ps. 0 and 1 are not prime numbers
+-- line 149 because both x are not arguments it is okay
 
 isPrime :: Integer -> Bool
-isPrime = todo
+isPrime x 
+    | x <= 1 = False -- why doesn't it work for negative numbers?
+    | smallestDivisor x == x = True 
+    | otherwise = False
 
 ------------------------------------------------------------------------------
 -- Ex 8: implement a function biggestPrimeAtMost that returns the
@@ -133,4 +166,6 @@ isPrime = todo
 --   biggestPrimeAtMost 10 ==> 7
 
 biggestPrimeAtMost :: Integer -> Integer
-biggestPrimeAtMost = todo
+biggestPrimeAtMost x
+    | isPrime x = x
+    | otherwise = biggestPrimeAtMost (x-1)

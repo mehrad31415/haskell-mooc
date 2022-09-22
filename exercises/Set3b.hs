@@ -22,6 +22,9 @@
 -- The tests will check that you haven't added imports :)
 
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use map" #-}
+{-# HLINT ignore "Use foldl" #-}
 
 module Set3b where
 
@@ -39,7 +42,8 @@ import Mooc.Todo
 --   buildList 7 0 3 ==> [3]
 
 buildList :: Int -> Int -> Int -> [Int]
-buildList start count end = todo
+buildList start 0 end = [end]
+buildList start count end = start : buildList start (count-1) end
 
 ------------------------------------------------------------------------------
 -- Ex 2: given i, build the list of sums [1, 1+2, 1+2+3, .., 1+2+..+i]
@@ -49,8 +53,23 @@ buildList start count end = todo
 -- Ps. you'll probably need a recursive helper function
 
 sums :: Int -> [Int]
-sums i = todo
+sums 1 = sums' 1
+sums i =  go [] (sums' i)
 
+--the sums function but the list is reverse than expected.
+sums' :: Int -> [Int]
+sums' 1 = [1]
+sums' i =  s i : sums' (i-1)
+
+--sum of 1 to n
+s :: Int -> Int
+s 1 = 1
+s i = i + s (i-1)
+
+--reverse function
+go :: [Int] -> [Int] -> [Int]
+go y [] = y
+go y (x:xs) = go (x:y) xs
 ------------------------------------------------------------------------------
 -- Ex 3: define a function mylast that returns the last value of the
 -- given list. For an empty list, a provided default value is
@@ -63,8 +82,9 @@ sums i = todo
 --   mylast 0 [1,2,3] ==> 3
 
 mylast :: a -> [a] -> a
-mylast def xs = todo
-
+mylast def [] = def
+mylast def (x:[]) = x
+mylast def (x:xs) = mylast def xs
 ------------------------------------------------------------------------------
 -- Ex 4: safe list indexing. Define a function indexDefault so that
 --   indexDefault xs i def
@@ -81,7 +101,9 @@ mylast def xs = todo
 --   indexDefault ["a","b","c"] (-1) "d" ==> "d"
 
 indexDefault :: [a] -> Int -> a -> a
-indexDefault xs i def = todo
+indexDefault (x:xs) 0 def = x
+indexDefault [] i def = def
+indexDefault (x:xs) i def = indexDefault xs (i-1) def
 
 ------------------------------------------------------------------------------
 -- Ex 5: define a function that checks if the given list is in
@@ -97,8 +119,12 @@ indexDefault xs i def = todo
 --   sorted [7,2,7] ==> False
 
 sorted :: [Int] -> Bool
-sorted xs = todo
+sorted [] = True
+sorted (x:[]) = True
+sorted (x:xs) = (x <= myHead xs) && sorted xs
 
+myHead :: [a] -> a
+myHead (x:xs) = x
 ------------------------------------------------------------------------------
 -- Ex 6: compute the partial sums of the given list like this:
 --

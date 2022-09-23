@@ -189,12 +189,23 @@ sum' (x:xs) = x + sum' xs
 -- try "mike">"Mike" :)) in ghci
 
 winner :: Map.Map String Int -> String -> String -> String
+winner scores player1 player2
+  | a >= b = player1
+  | b > a = player2
+  where a = Map.lookup player1 scores
+        b = Map.lookup player2 scores
+
+{-
+solution 2: 
+
+winner :: Map.Map String Int -> String -> String -> String
 winner scores player1 player2 
-    | a == b = player1
-    | a > b = player1 
-    | a < b = player2
-    where a = Map.lookup player1 scores
-          b = Map.lookup player2 scores
+  | a >= b = a
+  | a <  b = b
+  where a = Map.findWithDefault 0 player1 scores
+        b = Map.findWithDefault 0 player2 scores
+
+-}
 ------------------------------------------------------------------------------
 -- Ex 9: compute how many times each value in the list occurs. Return
 -- the frequencies as a Map from value to Int.
@@ -208,8 +219,16 @@ winner scores player1 player2
 --     ==> Map.fromList [(False,3),(True,1)]
 
 freqs :: (Eq a, Ord a) => [a] -> Map.Map a Int
-freqs xs = todo
+freqs [] = Map.empty
+freqs (x:xs) = Map.fromList (reverse (zip (x:xs) (numberOfOccur (x:xs))))
 
+numberOfOccur :: (Eq a, Ord a) => [a] -> [Int]
+numberOfOccur [] = []
+numberOfOccur (x:xs) = numOccurHead (x:xs) : numberOfOccur xs 
+
+numOccurHead :: (Eq a, Ord a) => [a] -> Int
+numOccurHead (x:[]) =1
+numOccurHead (x:y:xs) = if y == x then 1 + numOccurHead (x:xs) else numOccurHead (x:xs)
 ------------------------------------------------------------------------------
 -- Ex 10: recall the withdraw example from the course material. Write a
 -- similar function, transfer, that transfers money from one account

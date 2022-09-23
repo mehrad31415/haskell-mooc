@@ -18,11 +18,11 @@ import Mooc.Todo
 --   countNothings []  ==>  0
 --   countNothings [Just 1, Nothing, Just 3, Nothing]  ==>  2
 
-countNothings :: [Maybe a] -> Int
+countNothings :: (Eq a) => [Maybe a] -> Int
 countNothings xs = foldr countHelper 0 xs
 
-countHelper = todo
-
+countHelper :: (Eq a) => Maybe a -> Int -> Int
+countHelper x y = if length x == 1 then y else (y+1)
 ------------------------------------------------------------------------------
 -- Ex 2: myMaximum with a fold. Just like in the previous exercise,
 -- define maxHelper so that the given definition of myMaximum works.
@@ -35,7 +35,8 @@ myMaximum :: [Int] -> Int
 myMaximum [] = 0
 myMaximum (x:xs) = foldr maxHelper x xs
 
-maxHelper = todo
+maxHelper :: Int -> Int -> Int 
+maxHelper a b = if a>=b then a else b
 
 ------------------------------------------------------------------------------
 -- Ex 3: compute the sum and length of a list with a fold. Define
@@ -52,8 +53,10 @@ maxHelper = todo
 sumAndLength :: [Double] -> (Double,Int)
 sumAndLength xs = foldr slHelper slStart xs
 
-slStart = todo
-slHelper = todo
+slStart :: (Double, Int)
+slStart = (0, 0)
+slHelper :: Double -> (Double,Int) -> (Double,Int)
+slHelper x (y, z) = (x+y, z+1)
 
 ------------------------------------------------------------------------------
 -- Ex 4: implement concat with a fold. Define concatHelper and
@@ -67,9 +70,10 @@ slHelper = todo
 myConcat :: [[a]] -> [a]
 myConcat xs = foldr concatHelper concatStart xs
 
-concatStart = todo
-concatHelper = todo
-
+concatStart :: [a]
+concatStart = []
+concatHelper :: [a] -> [a] -> [a]
+concatHelper x y = x ++ y
 ------------------------------------------------------------------------------
 -- Ex 5: get all occurrences of the largest number in a list with a
 -- fold. Implement largestHelper so that the given definition of largest works.

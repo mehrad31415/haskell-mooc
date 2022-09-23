@@ -13,6 +13,7 @@
 --  * maximum
 --  * minimum
 --  * sort
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 module Set4a where
 
@@ -35,7 +36,8 @@ import Data.Array
 -- you remove the Eq a => constraint from the type!
 
 allEqual :: Eq a => [a] -> Bool
-allEqual xs = todo
+allEqual [] = True
+allEqual xs = length (nub xs) == 1
 
 ------------------------------------------------------------------------------
 -- Ex 2: implement the function distinct which returns True if all
@@ -50,7 +52,7 @@ allEqual xs = todo
 --   distinct [1,2] ==> True
 
 distinct :: Eq a => [a] -> Bool
-distinct = todo
+distinct xs = length (nub xs) == length xs
 
 ------------------------------------------------------------------------------
 -- Ex 3: implement the function middle that returns the middle value
@@ -63,7 +65,14 @@ distinct = todo
 --   middle 'b' 'a' 'c'  ==> 'b'
 --   middle 1 7 3        ==> 3
 
-middle = todo
+middle :: (Ord a) => a -> a -> a -> a
+middle x y z
+  | x >= y && y >= z = y
+  | x >= z && z >= y = z
+  | y >= z && z >= x = z
+  | y >= x && x >= z = x
+  | z >= y && y >= x = y
+  | z >= x && x >= y = x
 
 ------------------------------------------------------------------------------
 -- Ex 4: return the range of an input list, that is, the difference
@@ -78,8 +87,19 @@ middle = todo
 --   rangeOf [4,2,1,3]          ==> 3
 --   rangeOf [1.5,1.0,1.1,1.2]  ==> 0.5
 
-rangeOf :: [a] -> a
-rangeOf = todo
+rangeOf :: (Num a, Ord a) => [a] -> a
+rangeOf [] = 0
+rangeOf [x] = x
+rangeOf (x:xs) = biggest (x:xs) - smallest (x:xs)
+
+biggest :: (Ord a) => [a] -> a
+biggest [x] = x
+biggest (x:y:xs) = if x >= y then biggest (x:xs) else biggest (y:xs)
+
+
+smallest :: (Ord a) => [a] -> a
+smallest [x] = x
+smallest (x:y:xs) = if x <= y then smallest (x:xs) else smallest (y:xs)
 
 ------------------------------------------------------------------------------
 -- Ex 5: given a (non-empty) list of (non-empty) lists, return the longest
@@ -97,8 +117,17 @@ rangeOf = todo
 --   longest [[1,2,3],[4,5],[6]] ==> [1,2,3]
 --   longest ["bcd","def","ab"] ==> "bcd"
 
-longest = todo
+longest :: (Ord a) => [[a]] -> [a]
+longest [x] = x
+longest ((x:xs):(y:ys):z)
+  | length (x:xs) > length (y:ys) = longest ((x:xs):z)
+  | length (x:xs) < length (y:ys) = longest ((y:ys):z)
+  | length (x:xs) == length (y:ys) = if x >= y then longest ((y:ys):z) else longest ((x:xs):z)
 
+{-
+lon :: (Ord a) => [[a]] -> [a]
+lon x = last (sortBy (comparing length) x)
+-}
 ------------------------------------------------------------------------------
 -- Ex 6: Implement the function incrementKey, that takes a list of
 -- (key,value) pairs, and adds 1 to all the values that have the given key.
@@ -113,8 +142,12 @@ longest = todo
 --   incrementKey True [(True,1),(False,3),(True,4)] ==> [(True,2),(False,3),(True,5)]
 --   incrementKey 'a' [('a',3.4)] ==> [('a',4.4)]
 
-incrementKey :: k -> [(k,v)] -> [(k,v)]
-incrementKey = todo
+incrementKey :: (Eq k, Num v) => k -> [(k,v)] -> [(k,v)]
+incrementKey k ((key,value):xs) = incrementKey' k [] ((key,value):xs)
+
+incrementKey' :: (Eq k, Num v) => k -> [(k,v)] -> [(k,v)] -> [(k,v)]
+incrementKey' k y [] = reverse y
+incrementKey' k y ((key,value):xs) = if k == key then incrementKey' k ((key,value+1):y) xs else incrementKey' k ((key,value):y) xs
 
 ------------------------------------------------------------------------------
 -- Ex 7: compute the average of a list of values of the Fractional
@@ -129,7 +162,13 @@ incrementKey = todo
 -- length to a Fractional
 
 average :: Fractional a => [a] -> a
-average xs = todo
+average [] = 0
+average x = (sum' x) / fromIntegral (length x)
+
+sum' :: (Num a) => [a] -> a
+sum' [] = 0
+sum' (x:xs) = x + sum' xs
+
 
 ------------------------------------------------------------------------------
 -- Ex 8: given a map from player name to score and two players, return
@@ -147,9 +186,15 @@ average xs = todo
 --   winner (Map.fromList [("Mike",13607),("Bob",5899),("Lisa",5899)]) "Lisa" "Bob"
 --     ==> "Lisa"
 
-winner :: Map.Map String Int -> String -> String -> String
-winner scores player1 player2 = todo
+-- try "mike">"Mike" :)) in ghci
 
+winner :: Map.Map String Int -> String -> String -> String
+winner scores player1 player2 
+    | a == b = player1
+    | a > b = player1 
+    | a < b = player2
+    where a = Map.lookup player1 scores
+          b = Map.lookup player2 scores
 ------------------------------------------------------------------------------
 -- Ex 9: compute how many times each value in the list occurs. Return
 -- the frequencies as a Map from value to Int.

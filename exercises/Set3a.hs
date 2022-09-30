@@ -326,4 +326,16 @@ multiApp' (x:xs) num = [x num] ++ multiApp' xs num
 -- function, the surprise won't work.
 
 interpreter :: [String] -> [String]
-interpreter command =todo
+interpreter xs = split "up" "down" "right" "left" "printY" "printX" xs (0,0)
+
+split :: String -> String -> String -> String -> String -> String -> [String] -> (Int, Int) -> [String]
+split "up" "down" "right" "left" "printY" "printX" [] (a,b) = []
+split "up" "down" "right" "left" "printY" "printX" (x:xs) (a,b)
+  | x == "up"     =  split "up" "down" "right" "left" "printY" "printX" xs (a,b+1)
+  | x == "down"   =  split "up" "down" "right" "left" "printY" "printX" xs (a,b-1)
+  | x == "right"  =  split "up" "down" "right" "left" "printY" "printX" xs (a+1,b) 
+  | x == "left"   =  split "up" "down" "right" "left" "printY" "printX" xs (a-1,b)
+  | x == "printY" =  show b : split "up" "down" "right" "left" "printY" "printX" xs (a,b)
+  | x == "printX" =  show a : split "up" "down" "right" "left" "printY" "printX" xs (a,b)
+
+

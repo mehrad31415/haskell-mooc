@@ -229,7 +229,7 @@ joinToLength a xs = [ x++y | x <- xs, y <- xs, length (x++y)==a ]
 (+|+) [] [] = [] 
 (+|+) [] (y:ys) = [y]
 (+|+) (x:xs) [] = [x]
-(+|+) (x:xs) (y:ys) = [x] ++ [y] 
+(+|+) (x:xs) (y:ys) = x:y:[]
 
 ------------------------------------------------------------------------------
 -- Ex 11: remember the lectureParticipants example from Lecture 2? We

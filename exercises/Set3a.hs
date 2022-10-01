@@ -285,14 +285,20 @@ multiComp (f:fs) x = multiComp fs (f x)
 --   multiApp id [head, (!!2), last] "axbxc" ==> ['a','b','c'] i.e. "abc"
 --   multiApp sum [head, (!!2), last] [1,9,2,9,3] ==> 6
 
+multiApp :: ([b]->c) -> [(a->b)] -> a -> c
+multiApp f x y = f (multiApp' x y)
 
+multiApp' :: [(a->b)] -> a -> [b]
+multiApp' [] y = []
+multiApp' (x:xs) y = x y : multiApp' xs y
+{-
 multiApp :: ([b]->c) -> [(a->b)] -> a -> c
 multiApp f x num = f (multiApp' x num )
 
 multiApp' :: [(a->b)] -> a -> [b] 
 multiApp' [] num = []
 multiApp' (x:xs) num = [x num] ++ multiApp' xs num
-
+-}
 ------------------------------------------------------------------------------
 -- Ex 14: in this exercise you get to implement an interpreter for a
 -- simple language. You should keep track of the x and y coordinates,

@@ -224,15 +224,7 @@ rgb (Mix x y)        = map (/2) (zipWith (+) (rgb x) (rgb y))
 rgb (Invert Red)     = [0,1,1]
 rgb (Invert Green)   = [1,0,1]
 rgb (Invert Blue)    = [1,1,0]
-rgb (Invert x)       = minus 1 (rgb x)
-
-minus :: Int -> [Double] -> [Double]
-minus 1 [a,b,c] = [1-a,1-b,1-c]
-
-  
-
-
-
+rgb (Invert x)       = map (1-) (rgb x)
 
 ------------------------------------------------------------------------------
 -- Ex 9: define a parameterized datatype OneOrTwo that contains one or

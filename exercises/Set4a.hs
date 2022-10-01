@@ -191,9 +191,9 @@ sum' (x:xs) = x + sum' xs
 winner :: Map.Map String Int -> String -> String -> String
 winner scores player1 player2
   | a >= b = player1
-  | b > a = player2
-  where a = Map.lookup player1 scores
-        b = Map.lookup player2 scores
+  | b > a  = player2
+  where a  = Map.lookup player1 scores
+        b  = Map.lookup player2 scores
 
 {-
 solution 2: 
@@ -229,6 +229,23 @@ numberOfOccur (x:xs) = numOccurHead (x:xs) : numberOfOccur xs
 numOccurHead :: (Eq a, Ord a) => [a] -> Int
 numOccurHead (x:[]) =1
 numOccurHead (x:y:xs) = if y == x then 1 + numOccurHead (x:xs) else numOccurHead (x:xs)
+
+{-
+second method:
+import qualified Data.Map as Map 
+import Data.List
+
+freqs :: (Ord a, Eq a) => [a] -> Map.Map a Int 
+freqs (x:xs) = Map.fromList (nub( zip (x:xs) (map (freqs' (x:xs)) (x:xs)) ))
+
+freqs' :: (Ord a, Eq a) => [a] -> a -> Int
+freqs' [] y = 0
+freqs' (x:xs) y
+  | y == x    = 1 + freqs' xs y
+  | otherwise = freqs' xs y
+
+
+-}
 ------------------------------------------------------------------------------
 -- Ex 10: recall the withdraw example from the course material. Write a
 -- similar function, transfer, that transfers money from one account

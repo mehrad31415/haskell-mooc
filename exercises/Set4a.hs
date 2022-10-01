@@ -255,8 +255,15 @@ numOccurHead (x:y:xs) = if y == x then 1 + numOccurHead (x:xs) else numOccurHead
 --     ==> fromList [("Bob",100),("Mike",50)]
 
 transfer :: String -> String -> Int -> Map.Map String Int -> Map.Map String Int
-transfer from to amount bank = todo
+transfer from to amount bank = transfer' from to amount bank (Map.lookup from bank) (Map.lookup to bank)
 
+transfer' :: String -> String -> Int -> Map.Map String Int -> Maybe Int -> Maybe Int -> Map.Map String Int
+transfer' from to amount bank Nothing _ = bank 
+transfer' from to amount bank _ Nothing = bank
+transfer' from to amount bank (Just a) (Just b)
+  | amount - a > 0      = bank
+  | amount < 0 || a < 0 = bank
+  | otherwise           = Map.insert to (b + amount) (Map.insert from (a - amount) bank)
 ------------------------------------------------------------------------------
 -- Ex 11: given an Array and two indices, swap the elements in the indices.
 --
@@ -265,7 +272,7 @@ transfer from to amount bank = todo
 --         ==> array (1,4) [(1,"one"),(2,"three"),(3,"two"),(4,"four")]
 
 swap :: Ix i => i -> i -> Array i a -> Array i a
-swap i j arr = todo
+swap i j arr = arr // [(j,arr ! i), (i,arr ! j)]
 
 ------------------------------------------------------------------------------
 -- Ex 12: given an Array, find the index of the largest element. You
@@ -275,5 +282,14 @@ swap i j arr = todo
 --
 -- Hint: check out Data.Array.indices or Data.Array.assocs
 
+-- you cannot pattern match on data arrays.
+
 maxIndex :: (Ix i, Ord a) => Array i a -> i
-maxIndex = todo
+
+maxIndex arr = myMax (assocs arr)
+
+myMax :: (Ix i, Ord e) => [(i,e)] -> i
+myMax [(index,element)] = index
+myMax ((index,element):(index2,element2):xs)
+  | element >= element2 = myMax ((index,element):xs)
+  | otherwise           = myMax ((index2,element2):xs)

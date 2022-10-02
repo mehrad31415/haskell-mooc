@@ -4,6 +4,7 @@ module Set6 where
 
 import Mooc.Todo
 import Data.Char (toLower)
+import Distribution.Simple.Utils (xargs)
 
 ------------------------------------------------------------------------------
 -- Ex 1: define an Eq instance for the type Country below. You'll need
@@ -13,8 +14,12 @@ data Country = Finland | Switzerland | Norway
   deriving Show
 
 instance Eq Country where
-  (==) = todo
-
+  Finland     == Finland      = True
+  Finland     == _            = False
+  Switzerland == Switzerland  = True
+  Switzerland == _            = False
+  Norway      == Norway       = True
+  Norway      == _            = False
 ------------------------------------------------------------------------------
 -- Ex 2: implement an Ord instance for Country so that
 --   Finland <= Norway <= Switzerland
@@ -22,10 +27,25 @@ instance Eq Country where
 -- Remember minimal complete definitions!
 
 instance Ord Country where
-  compare = todo -- implement me?
-  (<=) = todo -- and me?
-  min = todo -- and me?
-  max = todo -- and me?
+  compare Finland Finland         = EQ
+  compare Finland _               = LT
+  compare Norway Norway           = EQ
+  compare Norway x                = if x == Switzerland then LT else GT
+  compare Switzerland Switzerland = EQ
+  compare Switzerland _           = GT
+  (<=) Finland _                  = True
+  (<=) Switzerland Switzerland    = True
+  (<=) Switzerland _              = False
+  (<=) Norway Finland             = False
+  (<=) Norway _                   = True
+  min Finland _                   = Finland
+  min Switzerland x               = x
+  min Norway Finland              = Finland
+  min Norway _                    = Norway
+  max Switzerland _               = Switzerland
+  max Finland x                   = x
+  max Norway Switzerland          = Switzerland
+  max Norway _                    = Norway
 
 ------------------------------------------------------------------------------
 -- Ex 3: Implement an Eq instance for the type Name which contains a String.
@@ -41,7 +61,13 @@ data Name = Name String
   deriving Show
 
 instance Eq Name where
-  (==) = todo
+  Name (x:xs) == Name (y:ys) = equal (x:xs) (y:ys) 
+    where equal [] []         = True
+          equal [] _          = False
+          equal _ []          = False
+          equal (x:xs) (y:ys) 
+            | toLower x == toLower y = equal xs ys
+            | otherwise              = False
 
 ------------------------------------------------------------------------------
 -- Ex 4: here is a list type parameterized over the type it contains.
@@ -55,7 +81,10 @@ data List a = Empty | LNode a (List a)
   deriving Show
 
 instance Eq a => Eq (List a) where
-  (==) = todo
+  Empty == Empty         = True
+  Empty == _             = False
+  _     == Empty         = False
+  LNode a x == LNode b y = a == b && x == y
 
 ------------------------------------------------------------------------------
 -- Ex 5: below you'll find two datatypes, Egg and Milk. Implement a
@@ -72,10 +101,19 @@ instance Eq a => Eq (List a) where
 
 data Egg = ChickenEgg | ChocolateEgg
   deriving Show
+
 data Milk = Milk Int -- amount in litres
   deriving Show
 
+class Price a where
+  price :: a -> Int
 
+instance Price Egg where
+  price ChickenEgg   = 20
+  price ChocolateEgg = 30
+
+instance Price Milk where
+  price (Milk x) = 15 * x
 ------------------------------------------------------------------------------
 -- Ex 6: define the necessary instance hierarchy in order to be able
 -- to compute these:
@@ -85,6 +123,13 @@ data Milk = Milk Int -- amount in litres
 -- price [Just ChocolateEgg, Nothing, Just ChickenEgg]  ==> 50
 -- price [Nothing, Nothing, Just (Milk 1), Just (Milk 2)]  ==> 45
 
+instance Price a => Price (Maybe a) where
+  price Nothing  = 0
+  price (Just x) = price x
+
+instance Price a => Price [a] where
+  price []     = 0
+  price (x:xs) = price x + price xs
 
 ------------------------------------------------------------------------------
 -- Ex 7: below you'll find the datatype Number, which is either an
@@ -96,7 +141,25 @@ data Milk = Milk Int -- amount in litres
 data Number = Finite Integer | Infinite
   deriving (Show,Eq)
 
-
+instance Ord Number where
+  compare (Finite _) Infinite   = LT
+  compare Infinite (Finite _)   = GT
+  compare Infinite Infinite     = EQ
+  compare (Finite x) (Finite y) = compare x y
+  (<=) (Finite _) Infinite      = True
+  (<=) Infinite (Finite _)      = False
+  (<=) Infinite Infinite        = True
+  (<=) (Finite x) (Finite y)    = (<=) x y
+  
+  {- why an error?!
+  max Infinite _                = Infinite
+  max (Finite _) Infinite       = Infinite
+  max (Finite x) (Finite y)     = max (fromIntegral x) (fromIntegral y)
+  min Infinite (Finite x)       = Finite x
+  min (Finite x) (Finite y)     = min (fromIntegral x) (fromIntegral y)
+  min Infinite Infinite         = Infinite
+  min (Finite x) Infinite       = Finite x
+  -}
 ------------------------------------------------------------------------------
 -- Ex 8: rational numbers have a numerator and a denominator that are
 -- integers, usually separated by a horizontal bar or a slash:
@@ -121,7 +184,7 @@ data RationalNumber = RationalNumber Integer Integer
   deriving Show
 
 instance Eq RationalNumber where
-  p == q = todo
+  RationalNumber x y == RationalNumber m n = x*n == m*y
 
 ------------------------------------------------------------------------------
 -- Ex 9: implement the function simplify, which simplifies rational a
@@ -140,9 +203,20 @@ instance Eq RationalNumber where
 --
 -- Hint: Remember the function gcd?
 
+-- try these and see the difference: 10 `mod` 3 | (-10) `mod` (-3) | (-10) `mod` (3) | 10 `mod` (-3)
 simplify :: RationalNumber -> RationalNumber
-simplify p = todo
+simplify (RationalNumber x y) = RationalNumber (x `div` m) (y `div` m) where m = gcdi x y
 
+
+gcdi :: Integer -> Integer -> Integer
+gcdi 0 0 = 0
+gcdi 0 x = x
+gcdi x 0 = x
+gcdi x y
+  | x < 0     = gcdi (-x) y
+  | y < 0     = gcdi x (-y)
+  | y <  x    = gcdi y x
+  | otherwise = gcdi (y `mod` x) x
 ------------------------------------------------------------------------------
 -- Ex 10: implement the typeclass Num for RationalNumber. The results
 -- of addition and multiplication must be simplified.
@@ -162,12 +236,15 @@ simplify p = todo
 --   signum (RationalNumber 0 2)             ==> RationalNumber 0 1
 
 instance Num RationalNumber where
-  p + q = todo
-  p * q = todo
-  abs q = todo
-  signum q = todo
-  fromInteger x = todo
-  negate q = todo
+  RationalNumber x y + RationalNumber m n = simplify (RationalNumber ((x*n)+(m*y)) (n*y))
+  RationalNumber x y * RationalNumber m n = simplify (RationalNumber (x*m) (n*y))
+  abs (RationalNumber x y)                = RationalNumber (abs x) (abs y)
+  signum (RationalNumber x y)
+    | x == 0      = RationalNumber 0 1
+    | x * y >= 0  = RationalNumber 1 1
+    | otherwise   = RationalNumber (-1) 1
+  fromInteger x                           = RationalNumber x 1
+  negate (RationalNumber x y)             = RationalNumber (-x) y
 
 ------------------------------------------------------------------------------
 -- Ex 11: a class for adding things. Define a class Addable with a
@@ -182,6 +259,17 @@ instance Num RationalNumber where
 --   add [1,2] [3,4]        ==>  [1,2,3,4]
 --   add zero [True,False]  ==>  [True,False]
 
+class Addable a where
+  zero :: a
+  add  :: a -> a -> a
+
+instance Addable Integer where
+  zero    = 0
+  add x y = x + y
+
+instance Addable [a] where
+  zero    = []
+  add x y = x ++ y
 
 ------------------------------------------------------------------------------
 -- Ex 12: cycling. Implement a type class Cycle that contains a
@@ -213,3 +301,19 @@ data Color = Red | Green | Blue
 data Suit = Club | Spade | Diamond | Heart
   deriving (Show, Eq)
 
+class Cycle a where
+  step :: a -> a
+  stepMany :: Int -> a -> a
+  stepMany 0 y = y
+  stepMany x y = stepMany (x-1) (step y)
+
+instance Cycle Color where
+  step Red   = Green
+  step Green = Blue
+  step Blue  = Red
+
+instance Cycle Suit where
+  step Club    = Spade
+  step Spade   = Diamond
+  step Diamond = Heart
+  step Heart   = Club

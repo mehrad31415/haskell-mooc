@@ -13,6 +13,7 @@ import Mooc.Todo
 -- We'll use the JuicyPixels library to generate images. The library
 -- exposes the Codec.Picture module that has everything we need.
 import Codec.Picture
+import Data.Bool (Bool(True))
 
 -- Let's start by defining Colors and Pictures.
 
@@ -133,7 +134,10 @@ renderListExample = renderList justADot (9,11) (9,11)
 --      ["000000","000000","000000"]]
 
 dotAndLine :: Picture
-dotAndLine = todo
+dotAndLine = Picture f
+  where f (Coord 3 4) = white
+        f (Coord _ 8) = pink
+        f (Coord _ _) = black
 ------------------------------------------------------------------------------
 
 ------------------------------------------------------------------------------
@@ -166,11 +170,11 @@ dotAndLine = todo
 --          ["7f0000","7f0000","7f0000"]]
 
 blendColor :: Color -> Color -> Color
-blendColor = todo
+blendColor (Color a b c) (Color x y z) = Color ((a+x) `div` 2) ((b+y) `div` 2) ((c+z) `div` 2)
 
 combine :: (Color -> Color -> Color) -> Picture -> Picture -> Picture
-combine = todo
-
+combine f (Picture g) (Picture h) = Picture z
+  where z (Coord x y) = f (g (Coord x y)) (h (Coord x y))
 ------------------------------------------------------------------------------
 
 -- Let's define blend, we'll use it later
@@ -230,7 +234,10 @@ exampleCircle = fill red (circle 80 100 200)
 --        ["000000","000000","000000","000000","000000","000000"]]
 
 rectangle :: Int -> Int -> Int -> Int -> Shape
-rectangle x0 y0 w h = todo
+rectangle x0 y0 w h = Shape f
+  where f (Coord m n)
+          | m>=x0 && m<x0+w && n>=y0 && n<y0+h = True
+          | otherwise                          = False
 ------------------------------------------------------------------------------
 
 ------------------------------------------------------------------------------
@@ -246,10 +253,12 @@ rectangle x0 y0 w h = todo
 -- shape.
 
 union :: Shape -> Shape -> Shape
-union = todo
+union (Shape x) (Shape y) = Shape z
+  where z (Coord m n) = x (Coord m n) || y (Coord m n)
 
 cut :: Shape -> Shape -> Shape
-cut = todo
+cut (Shape x) (Shape y) = Shape z
+  where z (Coord m n) = x (Coord m n) && not (y (Coord m n))
 ------------------------------------------------------------------------------
 
 -- Here's a snowman, built using union from circles and rectangles.
@@ -277,7 +286,10 @@ exampleSnowman = fill white snowman
 --        ["000000","000000","000000"]]
 
 paintSolid :: Color -> Shape -> Picture -> Picture
-paintSolid color shape base = todo
+paintSolid c (Shape f) (Picture g) = Picture z
+  where z coord 
+          | f coord   = c
+          | otherwise = g coord
 ------------------------------------------------------------------------------
 
 allWhite :: Picture
@@ -322,7 +334,11 @@ stripes a b = Picture f
 --       ["000000","000000","000000","000000","000000"]]
 
 paint :: Picture -> Shape -> Picture -> Picture
-paint pat shape base = todo
+paint (Picture f) (Shape g) (Picture h) = Picture z
+  where z coord
+          | g coord   = f coord
+          | otherwise = h coord
+
 ------------------------------------------------------------------------------
 
 -- Here's a patterned version of the snowman example. See it by running:
@@ -385,19 +401,27 @@ xy = Picture f
 data Fill = Fill Color
 
 instance Transform Fill where
-  apply = todo
+  apply (Fill c) p = Picture z
+    where z (Coord x y) = c
 
 data Zoom = Zoom Int
   deriving Show
 
 instance Transform Zoom where
-  apply = todo
+  apply (Zoom i) (Picture f) = Picture z
+    where z (Coord x y) = f (Coord (x `div` i) (y `div` i))
 
 data Flip = FlipX | FlipY | FlipXY
   deriving Show
 
 instance Transform Flip where
-  apply = todo
+  apply FlipX (Picture f) = Picture z
+    where z (Coord x y) = f (Coord (-x) y)
+  apply FlipY (Picture f) = Picture z
+    where z (Coord x y) = f (Coord x (-y))
+  apply FlipXY (Picture f) = flipXY (Picture f)
+  
+    
 ------------------------------------------------------------------------------
 
 ------------------------------------------------------------------------------
@@ -412,8 +436,8 @@ instance Transform Flip where
 data Chain a b = Chain a b
   deriving Show
 
-instance Transform (Chain a b) where
-  apply = todo
+instance (Transform a, Transform b) => Transform (Chain a b) where
+  apply (Chain a b) p = apply a (apply b p)
 ------------------------------------------------------------------------------
 
 -- Now we can redefine largeVerticalStripes using the above Transforms.
@@ -451,7 +475,11 @@ data Blur = Blur
   deriving Show
 
 instance Transform Blur where
-  apply = todo
+  apply Blur (Picture f) = Picture z
+    where z (Coord m n) = add1 5 (f (Coord m n)) (f (Coord m (n-1))) (f (Coord m (n+1))) (f (Coord (m-1) n)) (f (Coord (m+1) n))
+          add1 :: Int -> Color -> Color -> Color -> Color -> Color -> Color
+          add1 k (Color a1 a2 a3) (Color b1 b2 b3) (Color c1 c2 c3) (Color d1 d2 d3) (Color e1 e2 e3) = Color ((a1+b1+c1+d1+e1) `div` k) ((a2+b2+c2+d2+e2) `div` k) ((a3+b3+c3+d3+e3) `div` k)
+             
 ------------------------------------------------------------------------------
 
 ------------------------------------------------------------------------------
@@ -469,7 +497,8 @@ data BlurMany = BlurMany Int
   deriving Show
 
 instance Transform BlurMany where
-  apply = todo
+  apply (BlurMany 0) (Picture f) = Picture f
+  apply (BlurMany x) (Picture f) = apply (BlurMany (x-1)) (apply Blur (Picture f))
 ------------------------------------------------------------------------------
 
 -- Here's a blurred version of our original snowman. See it by running
@@ -477,3 +506,13 @@ instance Transform BlurMany where
 
 blurredSnowman = apply (BlurMany 2) exampleSnowman
 
+main = do
+  render examplePicture1 400 300 "example1.png"
+  render exampleCircle 400 300 "circle.png"
+  render exampleSnowman 400 300 "snowman.png"
+  render exampleColorful 400 300 "colorful.png"
+  render examplePatterns 400 300 "patterns.png"
+  render largeVerticalStripes 400 300 "large-stripes.png"
+  render largeVerticalStripes2 400 300 "large-stripes2.png"
+  render checkered 400 300 "checkered.png"
+  render blurredSnowman 400 300 "blurred.png"

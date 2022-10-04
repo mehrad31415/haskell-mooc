@@ -306,20 +306,28 @@ passwordAllowed x  (Or y z) = passwordAllowed x y || passwordAllowed x z
 --     ==> "(3*(1+1))"
 --
 
-data Arithmetic = Arithmetic Integer
+data Arithmetic = Literal Integer | Node String Arithmetic Arithmetic
   deriving Show
 
 literal :: Integer -> Arithmetic
-literal x = Arithmetic x
+literal x = Literal x
+
 
 operation :: String -> Arithmetic -> Arithmetic -> Arithmetic
-operation "+" (Arithmetic x) (Arithmetic y) = Arithmetic (x+y)
-operation "*" (Arithmetic x) (Arithmetic y) = Arithmetic (x*y)
+operation s x y = Node s x y
+
+
+-- Operation "+" (Operation "*" (literal 5) (literal 10)) (Operation "+" (literal 2) (literal 7))
+--59
 
 evaluate :: Arithmetic -> Integer
-evaluate (Arithmetic x) = x
+evaluate (Literal x) = x
+evaluate (Node s x y)
+  | s == "+" = evaluate x + evaluate y
+  | s == "*" = evaluate x * evaluate y
 
 render :: Arithmetic -> String
-render = todo
-
-
+render (Literal x) = show x
+render (Node s x y)
+  | s == "+" = "(" ++ render x ++ "+" ++ render y ++ ")"
+  | s == "*" = "(" ++ render x ++ "*" ++ render y ++ ")"

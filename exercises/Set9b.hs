@@ -389,10 +389,8 @@ step :: Size -> Stack -> Stack
 step size xs = step' size xs (fixFirst size xs)
 
 step' :: Size -> Stack -> Maybe Stack -> Stack 
-step' size xs Nothing = backtrack xs
-step' size (x:xs) (Just ys)
-  | danger x xs = continue ys
-  | otherwise   = continue (x:xs)
+step' size xs Nothing       = backtrack xs
+step' size (x:xs) (Just ys) = continue ys
 --------------------------------------------------------------------------------
 -- Ex 9: Let's solve our puzzle! The function finish takes a partial
 -- solution (stack) and repeatedly step until a complete solution is
